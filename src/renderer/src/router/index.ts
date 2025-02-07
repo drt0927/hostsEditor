@@ -14,7 +14,8 @@ const routes: Array<RouteRecordRaw> = [
         name: 'Index',
         component: () => import('@/views/Index.vue'),
         meta: {
-          depth: 1
+          depth: 1,
+          title: ''
         }
       },
       {
@@ -23,7 +24,18 @@ const routes: Array<RouteRecordRaw> = [
         name: 'HostsEditor',
         component: () => import('@/views/HostsEditor/Index.vue'),
         meta: {
-          depth: 1
+          depth: 1,
+          title: 'Hosts 🔮'
+        }
+      },
+      {
+        // ParkingSearch
+        path: '/parking-search',
+        name: 'ParkingSearch',
+        component: () => import('@/views/HostsEditor/Index.vue'),
+        meta: {
+          depth: 1,
+          title: '🅿️주차장🅿️ 검색'
         }
       }
     ]
@@ -33,6 +45,11 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
   history: createWebHashHistory(),
   routes
+})
+
+router.beforeEach((_to, _from, next) => {
+  document.title = `Hoe${_to.meta.title ? ` - ${_to.meta.title}` : ''}`
+  next()
 })
 
 export default router

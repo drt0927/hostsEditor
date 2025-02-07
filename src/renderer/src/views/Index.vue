@@ -1,18 +1,20 @@
 <template>
   <div>
-    <ElButton @click="go('HostsEditor')">HostsEditor</ElButton>
-    <ElButton>이제 뭘 만드나...</ElButton>
+    <ElButton v-for="r of route" :key="r.name" @click="go(r.name)">{{ r.meta.title }}</ElButton>
   </div>
 </template>
 
 <script lang="ts" setup>
 import { ElButton } from 'element-plus'
-import { useRouter } from 'vue-router'
+import { computed } from 'vue'
+import { RouteRecordNameGeneric, useRouter } from 'vue-router'
 
 const router = useRouter()
-type ViewName = 'HostsEditor'
+const route = computed(() =>
+  router.getRoutes().filter((r) => r.meta.depth === 1 && r.name !== 'Index')
+)
 
-function go(view: ViewName) {
+function go(view: RouteRecordNameGeneric) {
   router.push({
     name: view
   })
