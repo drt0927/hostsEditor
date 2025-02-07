@@ -1,6 +1,8 @@
 <template>
   <el-menu :default-active="activeIndex" :router="true" mode="horizontal" :ellipsis="false">
-    <el-menu-item index="/">Home</el-menu-item>
+    <el-menu-item index="/">
+      <img style="width: 55px" src="@/assets/icon.png" alt="Hoe Icon" />
+    </el-menu-item>
     <el-menu-item index="/hosts-editor">HostsEditor</el-menu-item>
   </el-menu>
   <div id="app-wrapper" class="d-flex flex-column flex-column-fluid">

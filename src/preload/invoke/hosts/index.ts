@@ -18,5 +18,4 @@ export class HostsInvoke extends BaseInvoke {
     ipcRenderer.invoke(this.GetInvokeKey('CreateHosts'), name)
   EditHosts = (name: string, txt: string): Promise<{ success: boolean; error?: Error }> =>
     ipcRenderer.invoke(this.GetInvokeKey('EditHosts'), name, txt)
-  SetTrayMenu = (): Promise<undefined> => ipcRenderer.invoke(this.GetInvokeKey('SetTrayMenu'))
 }

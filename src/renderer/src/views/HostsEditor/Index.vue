@@ -130,7 +130,6 @@ onMounted(async () => {
     currentHostsFile.value = current.name
     selectedHostsFile.value = current.name
   }
-  window.api.hostsInvoke.SetTrayMenu()
 })
 
 async function shiftConfirmExcute(filename: string) {
@@ -148,7 +147,6 @@ async function shiftConfirmExcute(filename: string) {
     if (setResult.success) {
       await ElMessageBox.alert('hosts 파일이 변경되었습니다.')
       currentHostsFile.value = filename
-      window.api.hostsInvoke.SetTrayMenu()
     } else {
       await ElMessageBox.alert(`hosts 파일 변경에 실패했습니다.\n${setResult.error?.message}`)
     }
@@ -191,7 +189,6 @@ async function createHostsFile() {
     if (result.success) {
       await ElMessageBox.alert(`[${input.value}] 파일이 생성되었습니다.`, { type: 'success' })
       createdHostsFile()
-      window.api.hostsInvoke.SetTrayMenu()
     } else {
       await ElMessageBox.alert(
         `[${input.value}] 파일 생성에 실패했습니다.\n${result.error?.message}`,
@@ -226,7 +223,6 @@ async function deleteHostsFile() {
       type: 'success'
     })
     hostsFileListRef.value?.bindList()
-    window.api.hostsInvoke.SetTrayMenu()
   }
 }
 

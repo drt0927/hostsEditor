@@ -50,6 +50,14 @@ function createWindow(): void {
     }
   })
 
+  mainWindow.on('hide', () => {
+    trayWrapper.create(mainWindow)
+  })
+
+  mainWindow.on('show', () => {
+    trayWrapper.destroy()
+  })
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
@@ -62,11 +70,6 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
-
-  trayWrapper.create()
-  trayWrapper.tray.on('double-click', () => {
-    mainWindow.show()
-  })
 
   // globalShortcut.register('CommandOrControl+F', () => {
   //   mainWindow.webContents.send('on-find')
