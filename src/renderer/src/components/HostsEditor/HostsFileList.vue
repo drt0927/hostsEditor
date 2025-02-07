@@ -27,7 +27,7 @@ const props = withDefaults(defineProps<IProps>(), {
 })
 
 const emit = defineEmits<{
-  (event: 'update:selectedHostsFile', data: string): void
+  (event: 'click', data: string): void
 }>()
 
 watch(
@@ -47,12 +47,11 @@ watch(
 const treeData = ref<ITree[]>([])
 
 async function handleNodeClick(data: ITree) {
-  emit('update:selectedHostsFile', data.label)
+  emit('click', data.label)
 }
 
 async function bindList() {
   const list = await window.api.hostsInvoke.GetHostsFiles()
-  // treeData.value 클리어 후 다시 추가
   treeData.value.splice(0, treeData.value.length)
   treeData.value.push(
     ...list.map((item) => {
@@ -64,7 +63,6 @@ async function bindList() {
 }
 
 onMounted(async () => {
-  window.api.hostsInvoke.SetTrayMenu()
   await bindList()
 })
 
@@ -73,4 +71,8 @@ defineExpose({
 })
 </script>
 
-<style lang="css"></style>
+<style lang="css">
+.el-tree--highlight-current .el-tree-node.is-current > .el-tree-node__content {
+  background-color: var(--el-color-primary-light-7);
+}
+</style>

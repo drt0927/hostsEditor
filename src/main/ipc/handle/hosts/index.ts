@@ -71,7 +71,7 @@ export class HostsHandle extends BaseHandle {
       })
     )
 
-    trayWrapper.setContextMenu(menu)
+    trayWrapper.setContextMenu('HostsEditor', menu)
   }
 
   // @PrivateProperty()

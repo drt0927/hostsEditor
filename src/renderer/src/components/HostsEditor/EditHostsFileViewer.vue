@@ -1,24 +1,37 @@
 <template>
-  <ElInput v-model="hostsPath" disabled>
-    <template #append>
-      <ElButton type="primary" :disabled="saveButtonDisabled" @click="save">저장</ElButton>
+  <ElDropdown placement="bottom" style="width: 100%" @command="handleCommand">
+    <ElInput v-model="hostsPath" disabled>
+      <template #append>
+        <ElButton type="primary" :disabled="saveButtonDisabled" @click="save">저장</ElButton>
+      </template>
+    </ElInput>
+    <template #dropdown>
+      <ElDropdownItem>
+        <ElDropdownItem command="openExplorer">경로 열기</ElDropdownItem>
+      </ElDropdownItem>
     </template>
-  </ElInput>
+  </ElDropdown>
   <input v-model="hostsOriginText" type="text" disabled style="display: none" />
   <ElInput v-model="hostsText" type="textarea" resize="none"></ElInput>
 </template>
 
 <script setup lang="ts">
-import { ElButton, ElInput, ElMessageBox } from 'element-plus'
+import { ElButton, ElDropdown, ElDropdownItem, ElInput, ElMessageBox } from 'element-plus'
 import { ref, watch } from 'vue'
 
 interface Props {
   selectedFileName?: string
+  selectedFilePath?: string
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  selectedFileName: undefined
+  selectedFileName: undefined,
+  selectedFilePath: undefined
 })
+
+const emit = defineEmits<{
+  (event: 'update:selectedFilePath', data: string): void
+}>()
 
 const hostsPath = ref<string>('')
 const hostsText = ref<string>('')
@@ -33,6 +46,7 @@ watch(
       hostsOriginText.value = file.txt
       hostsPath.value = file.path
       hostsText.value = file.txt
+      emit('update:selectedFilePath', file.path)
     }
   }
 )
@@ -72,6 +86,17 @@ async function save() {
       })
     }
   }
+}
+
+function handleCommand(command: string) {
+  if (command === 'openExplorer') {
+    openFolder()
+  }
+}
+
+function openFolder() {
+  const path = hostsPath.value.split('\\').slice(0, -1).join('\\')
+  window.api.windowInvoke.OpenShellWindow(path)
 }
 </script>
 <style lang="css">

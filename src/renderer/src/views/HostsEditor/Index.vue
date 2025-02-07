@@ -1,28 +1,57 @@
 <template>
   <div class="row">
-    <div class="col-md-2">
+    <div class="col-md-3" style="width: 250px">
       <div class="row mb-1">
         <div class="col-md-12">
           <ElButton type="success" @click="createHostsFile">생성</ElButton>
-          <ElButton type="danger" @click="deleteHostsFile">삭제</ElButton>
+          <ElButton :disabled="deleteButtonDisabled" type="danger" @click="deleteHostsFile">
+            삭제
+          </ElButton>
+          <ElTooltip
+            raw-content
+            :content="`
+            <b style='font-size: 15px; color: var(--el-color-success)'>초록 배경</b>: 현재 사용중인 파일<br/>
+            <b style='font-size: 15px; color: var(--el-color-primary)'>파랑 배경</b>: 선택된 파일<br/>
+            <b style='font-size: 15px; color: var(--el-color-warning)'>선택된 파일 한번 더 클릭</b> 시 교체 팝업이 뜹니다.
+            `"
+            placement="right"
+          >
+            <ElButton type="primary" disabled :icon="InfoFilled">정보</ElButton>
+          </ElTooltip>
         </div>
       </div>
       <HostsFileList
         ref="hostsFileListRef"
         v-model:selected-hosts-file="selectedHostsFile"
         :current-hosts-file="currentHostsFile"
+        @click="HostsFileListClickHandler"
       />
     </div>
-    <div class="col-md-10">
+    <div class="col-md-9">
       <div class="row">
         <div class="col-md-6">
           <div class="row mb-1">
             <div class="col-md-12">
-              <ElButton type="success" @click="shiftHostsFile">교체</ElButton>
+              <ElButton :disabled="deleteButtonDisabled" type="success" @click="shiftHostsFile">
+                교체
+              </ElButton>
               <ElButton type="primary" @click="goNexonLogin">NEXON Login</ElButton>
+              <ElTooltip
+                class="box-item"
+                effect="dark"
+                content="선택된 파일과 hosts 파일을 VSCode에서 비교합니다."
+                placement="top"
+              >
+                <ElButton :disabled="diffButtonDisabled" type="warning" @click="goDiff">
+                  VSCode Diff
+                </ElButton>
+              </ElTooltip>
             </div>
           </div>
-          <EditHostsFileViewer :selected-file-name="selectedHostsFile" />
+          <EditHostsFileViewer
+            v-model:selected-file-path="selectedHostsFilePath"
+            :selected-file-name="selectedHostsFile"
+          />
         </div>
         <div class="col-md-6">
           <div class="row mb-1">
@@ -30,28 +59,38 @@
               <ElButton type="success" @click="hostsReload">Hosts Reload</ElButton>
             </div>
           </div>
-          <OriginHostsFileViewer ref="originRef" />
+          <OriginHostsFileViewer
+            ref="originRef"
+            v-model:selected-file-path="currentHostsFilePath"
+          />
         </div>
       </div>
     </div>
   </div>
   <Search ref="searchRef" v-model:show="searchShow" />
-  <CreateHostsModal v-model:show="showCreateHostsModal" @saved="createdHostsFile" />
 </template>
 
 <script lang="ts" setup>
-import { onMounted, ref, useTemplateRef } from 'vue'
+import { computed, onMounted, ref, useTemplateRef } from 'vue'
 import HostsFileList from '@/components/HostsEditor/HostsFileList.vue'
 import EditHostsFileViewer from '@/components/HostsEditor/EditHostsFileViewer.vue'
 import OriginHostsFileViewer from '@/components/HostsEditor/OriginHostsFileViewer.vue'
-import CreateHostsModal from '@/components/HostsEditor/CreateHostsModal.vue'
 import Search from '@/components/Search.vue'
-import { ElButton, ElMessageBox } from 'element-plus'
+import { ElButton, ElMessageBox, ElTooltip } from 'element-plus'
+import { InfoFilled } from '@element-plus/icons-vue'
 
 const originRef = useTemplateRef('originRef')
 const hostsFileListRef = useTemplateRef('hostsFileListRef')
 const selectedHostsFile = ref<string>('')
+const selectedHostsFilePath = ref<string>('')
 const currentHostsFile = ref<string>('')
+const currentHostsFilePath = ref<string>('')
+const deleteButtonDisabled = computed(() => currentHostsFile.value === selectedHostsFile.value)
+const diffButtonDisabled = computed(() => {
+  if (currentHostsFile.value === selectedHostsFile.value) return true
+  if (!selectedHostsFile.value) return true
+  return false
+})
 
 function hostsReload() {
   originRef.value?.getHosts()
@@ -79,7 +118,8 @@ window.electron.ipcRenderer.on('on-shift-enter', () => {
   }
 })
 window.electron.ipcRenderer.on('on-hosts-change', (_event, filename) => {
-  window.api.hostsInvoke.SetHosts(filename)
+  currentHostsFile.value = filename
+  originRef.value?.getHosts()
   hostsFileListRef.value?.bindList()
 })
 //#endregion
@@ -90,42 +130,47 @@ onMounted(async () => {
     currentHostsFile.value = current.name
     selectedHostsFile.value = current.name
   }
+  window.api.hostsInvoke.SetTrayMenu()
 })
 
-async function shiftHostsFile() {
-  if (currentHostsFile.value !== selectedHostsFile.value) {
-    const result = await ElMessageBox.confirm(
-      `[${currentHostsFile.value}] -> [${selectedHostsFile.value}] 파일로 교체하시겠습니까?`,
-      {
-        cancelButtonText: '취소',
-        confirmButtonText: '교체',
-        type: 'warning'
-      }
-    )
-    if (result === 'confirm') {
-      const setResult = await window.api.hostsInvoke.SetHosts(selectedHostsFile.value)
-      if (setResult.success) {
-        await ElMessageBox.alert('hosts 파일이 변경되었습니다.')
-        currentHostsFile.value = selectedHostsFile.value
-      } else {
-        await ElMessageBox.alert(`hosts 파일 변경에 실패했습니다.\n${setResult.error?.message}`)
-      }
+async function shiftConfirmExcute(filename: string) {
+  if (currentHostsFile.value === selectedHostsFile.value) return
+  const confirm = await ElMessageBox.confirm(
+    `[${currentHostsFile.value}] -> [${filename}] 파일로 교체하시겠습니까?`,
+    {
+      cancelButtonText: '취소',
+      confirmButtonText: '선택',
+      type: 'warning'
+    }
+  )
+  if (confirm === 'confirm') {
+    const setResult = await window.api.hostsInvoke.SetHosts(filename)
+    if (setResult.success) {
+      await ElMessageBox.alert('hosts 파일이 변경되었습니다.')
+      currentHostsFile.value = filename
+      window.api.hostsInvoke.SetTrayMenu()
+    } else {
+      await ElMessageBox.alert(`hosts 파일 변경에 실패했습니다.\n${setResult.error?.message}`)
     }
   }
 }
 
-const showCreateHostsModal = ref<boolean>(false)
-function createHostsFile() {
-  /*
-  //   // 중복 확인
-  //   const list = await window.api.hostsInvoke.GetHostsFiles()
-  //   if (list.includes(fileName.value)) {
-  //     alert(`[${fileName.value}] 파일이 이미 존재합니다.`)
-  //     return
-  //   }
-  */
-  ElMessageBox.prompt(
-    '생성할 파일명을 입력하세요.<br/>파일의 내용은 원본 hosts 파일의 내용을 복사하여 생성합니다.',
+async function shiftHostsFile() {
+  await shiftConfirmExcute(selectedHostsFile.value)
+}
+
+async function HostsFileListClickHandler(filename: string) {
+  if (selectedHostsFile.value === filename) {
+    await shiftConfirmExcute(filename)
+  } else {
+    selectedHostsFile.value = filename
+  }
+}
+
+async function createHostsFile() {
+  const input = await ElMessageBox.prompt(
+    `생성할 파일명을 입력하세요.<br/>
+    생성된 파일의 내용은 <b style="color: orange;">원본 hosts 파일의 내용을 복사</b>합니다.`,
     'hosts 파일 생성',
     {
       dangerouslyUseHTMLString: true,
@@ -134,25 +179,28 @@ function createHostsFile() {
       inputPattern: /^[a-zA-Z0-9_-]+$/,
       inputErrorMessage: '영문, 숫자, -, _ 만 입력 가능합니다.'
     }
-  ).then(async ({ value }) => {
-    if (value) {
-      const list = await window.api.hostsInvoke.GetHostsFiles()
-      if (list.includes(value)) {
-        await ElMessageBox.alert(`[${value}] 파일이 이미 존재합니다.`, { type: 'error' })
-        return
-      }
-      const result = await window.api.hostsInvoke.CreateHosts(value)
-      if (result.success) {
-        await ElMessageBox.alert(`[${value}] 파일이 생성되었습니다.`, { type: 'success' })
-        createdHostsFile()
-      } else {
-        await ElMessageBox.alert(`[${value}] 파일 생성에 실패했습니다.\n${result.error?.message}`, {
-          type: 'error'
-        })
-      }
+  )
+
+  if (input.value) {
+    const list = await window.api.hostsInvoke.GetHostsFiles()
+    if (list.includes(input.value)) {
+      await ElMessageBox.alert(`[${input.value}] 파일이 이미 존재합니다.`, { type: 'error' })
+      return
     }
-  })
-  // showCreateHostsModal.value = true
+    const result = await window.api.hostsInvoke.CreateHosts(input.value)
+    if (result.success) {
+      await ElMessageBox.alert(`[${input.value}] 파일이 생성되었습니다.`, { type: 'success' })
+      createdHostsFile()
+      window.api.hostsInvoke.SetTrayMenu()
+    } else {
+      await ElMessageBox.alert(
+        `[${input.value}] 파일 생성에 실패했습니다.\n${result.error?.message}`,
+        {
+          type: 'error'
+        }
+      )
+    }
+  }
 }
 
 function createdHostsFile() {
@@ -160,6 +208,10 @@ function createdHostsFile() {
 }
 
 async function deleteHostsFile() {
+  if (currentHostsFile.value === selectedHostsFile.value) {
+    await ElMessageBox.alert('현재 사용중인 파일은 삭제할 수 없습니다.', { type: 'error' })
+    return
+  }
   const result = await ElMessageBox.confirm(
     `[${selectedHostsFile.value}] 파일을 삭제하시겠습니까?`,
     {
@@ -174,20 +226,22 @@ async function deleteHostsFile() {
       type: 'success'
     })
     hostsFileListRef.value?.bindList()
+    window.api.hostsInvoke.SetTrayMenu()
   }
 }
 
 function goNexonLogin() {
-  window.api.windowInvoke.Open('https://nxlogin.nexon.com/')
+  window.api.windowInvoke.OpenElectronWindow('https://nxlogin.nexon.com/')
+}
+
+function goDiff() {
+  window.api.windowInvoke.ExecuteCommand(
+    `code --diff ${selectedHostsFilePath.value} ${currentHostsFilePath.value}`
+  )
 }
 </script>
 
 <style>
-.app-content {
-  padding-top: 10px !important;
-  padding-bottom: 0px;
-}
-
 textarea {
   height: 535px;
   resize: none;

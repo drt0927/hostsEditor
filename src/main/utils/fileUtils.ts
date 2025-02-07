@@ -3,13 +3,13 @@ import fs from 'fs'
 import crypto from 'crypto'
 
 class FileUtils {
-  appDataPath = `${app.getPath('appData')}/HostsEditor`
+  appDataPath = `${app.getPath('appData')}\\HostsEditor`
 
   /**
    * C:/Windows/system32/drivers/etc/hosts 파일을 읽어온다.
    */
   getOriginHosts() {
-    const originPath = 'C:/Windows/system32/drivers/etc/hosts'
+    const originPath = 'C:\\Windows\\system32\\drivers\\etc\\hosts'
     const txt = fs.readFileSync(originPath, 'utf-8')
     return { txt, path: originPath }
   }
@@ -20,7 +20,7 @@ class FileUtils {
   saveOriginHosts() {
     // appData 경로에 원본 hosts가 없는 경우 저장한다.
     // 원본 hosts 파일명: origin_hosts
-    const savePath = `${this.appDataPath}/origin_hosts`
+    const savePath = `${this.appDataPath}\\origin_hosts`
 
     // appDataPath에 해당하는 폴더가 있는지 확인하고, 없는 경우 생성
     !fs.existsSync(this.appDataPath) && fs.mkdirSync(this.appDataPath)
@@ -52,7 +52,7 @@ class FileUtils {
     const md5OriginHosts = crypto.createHash('md5').update(originHosts.txt).digest('hex')
 
     const currentHosts = files.find((file) => {
-      const txt = fs.readFileSync(`${this.appDataPath}/${file}`, 'utf-8')
+      const txt = fs.readFileSync(`${this.appDataPath}\\${file}`, 'utf-8')
       const md5 = crypto.createHash('md5').update(txt).digest('hex')
       return md5 === md5OriginHosts
     })
@@ -60,7 +60,7 @@ class FileUtils {
     if (!currentHosts) {
       return undefined
     } else {
-      const path = `${this.appDataPath}/${currentHosts}`
+      const path = `${this.appDataPath}\\${currentHosts}`
       const txt = fs.readFileSync(path, 'utf-8')
       return {
         txt: txt,
@@ -74,7 +74,7 @@ class FileUtils {
    * appDataPath 폴더에 저장된 hosts 파일을 읽어온다.
    */
   getHosts(name: string) {
-    const path = `${this.appDataPath}/${name}`
+    const path = `${this.appDataPath}\\${name}`
     const txt = fs.readFileSync(path, 'utf-8')
     return { txt, path }
   }
@@ -84,8 +84,8 @@ class FileUtils {
    */
   setOriginHosts(name: string) {
     try {
-      const originPath = 'C:/Windows/system32/drivers/etc/hosts'
-      const savePath = `${this.appDataPath}/${name}`
+      const originPath = 'C:\\Windows\\system32\\drivers\\etc\\hosts'
+      const savePath = `${this.appDataPath}\\${name}`
       const txt = fs.readFileSync(savePath, 'utf-8')
       fs.writeFileSync(originPath, txt, { encoding: 'utf-8' })
       return {
@@ -104,7 +104,7 @@ class FileUtils {
    */
   deleteHosts(name: string) {
     try {
-      const path = `${this.appDataPath}/${name}`
+      const path = `${this.appDataPath}\\${name}`
       fs.unlinkSync(path)
       return {
         success: true
@@ -122,7 +122,7 @@ class FileUtils {
    */
   createHosts(name: string) {
     try {
-      const path = `${this.appDataPath}/${name}`
+      const path = `${this.appDataPath}\\${name}`
       const originHosts = this.getOriginHosts()
       fs.writeFileSync(path, `# ${name}\r\n${originHosts.txt}`, { encoding: 'utf-8' })
       return {
@@ -141,7 +141,7 @@ class FileUtils {
    */
   editHosts(name: string, txt: string) {
     try {
-      const path = `${this.appDataPath}/${name}`
+      const path = `${this.appDataPath}\\${name}`
       fs.writeFileSync(path, txt, { encoding: 'utf-8' })
       return {
         success: true

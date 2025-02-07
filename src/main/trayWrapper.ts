@@ -1,38 +1,44 @@
-import { Tray } from 'electron'
+import { app, Menu, Tray } from 'electron'
 import icon from '../../resources/icon.png?asset'
+export type TraySubmenuType = 'HostsEditor' | 'Quit'
 
 class TrayWrapper {
   tray!: Tray
-  constructor() {
-    /*
-    const tray = new Tray(icon)
-
-    const contextMenu = Menu.buildFromTemplate([
-      { label: 'Item1', type: 'radio' },
-      { label: 'Item2', type: 'radio' },
-      { label: 'Item3', type: 'radio', checked: true },
-      { label: 'Item4', type: 'radio' }
-    ])
-    tray.on('double-click', () => {
-      // event.preventDefault()
-      mainWindow.show()
-    })
-    tray.setIgnoreDoubleClickEvents(true)
-    tray.setToolTip('This is my application')
-    tray.setTitle('This is my title')
-    tray.setContextMenu(contextMenu)
-    */
-  }
-
   create() {
     this.tray = new Tray(icon)
     this.tray.setIgnoreDoubleClickEvents(true)
-    this.tray.setToolTip('This is my application')
-    this.tray.setTitle('This is my title')
+    this.tray.setTitle('hoe')
+    const trayMenu = this.getContextMenuTemplate()
+    this.tray.setContextMenu(trayMenu)
   }
 
-  setContextMenu(contextMenu: Electron.Menu) {
-    this.tray.setContextMenu(contextMenu)
+  getContextMenuTemplate() {
+    const menuItem = Menu.buildFromTemplate([
+      {
+        label: 'HostsEditor',
+        id: 'HostsEditor',
+        type: 'submenu',
+        submenu: []
+      },
+      {
+        label: 'Quit',
+        id: 'Quit',
+        type: 'normal',
+        click: () => {
+          app.quit()
+        }
+      }
+    ])
+
+    return menuItem
+  }
+
+  setContextMenu(type: TraySubmenuType, contextMenu: Electron.Menu) {
+    const trayMenu = this.getContextMenuTemplate()
+    contextMenu.items.forEach((item) => {
+      trayMenu.getMenuItemById(type)?.submenu?.append(item)
+    })
+    this.tray.setContextMenu(trayMenu)
   }
 }
 

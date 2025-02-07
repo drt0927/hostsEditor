@@ -1,6 +1,7 @@
 <template>
   <div>
     <ElButton @click="go('HostsEditor')">HostsEditor</ElButton>
+    <ElButton>이제 뭘 만드나...</ElButton>
   </div>
 </template>
 

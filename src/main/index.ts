@@ -30,18 +30,23 @@ function createWindow(): void {
 
   mainWindow.on('close', async (e) => {
     e.preventDefault()
-    const res = await dialog.showMessageBox(mainWindow, {
-      type: 'question',
-      title: '종료',
-      message: '프로그램을 종료하시겠습니까?',
-      cancelId: -1,
-      buttons: ['종료', '최소화']
-    })
-    if (res.response === 0) {
+    if (mainWindow.isVisible()) {
+      const res = await dialog.showMessageBox(mainWindow, {
+        type: 'question',
+        title: '종료',
+        message: '프로그램을 종료하시겠습니까?',
+        cancelId: -1,
+        buttons: ['종료', '최소화']
+      })
+      if (res.response === 0) {
+        mainWindow.destroy()
+        app.quit()
+      } else if (res.response === 1) {
+        mainWindow.hide()
+      }
+    } else {
       mainWindow.destroy()
       app.quit()
-    } else if (res.response === 1) {
-      mainWindow.hide()
     }
   })
 
