@@ -36,13 +36,13 @@ function createWindow(): void {
         title: '종료',
         message: '프로그램을 종료하시겠습니까?',
         cancelId: -1,
-        buttons: ['종료', '최소화']
+        buttons: ['최소화', '종료']
       })
       if (res.response === 0) {
+        mainWindow.hide()
+      } else if (res.response === 1) {
         mainWindow.destroy()
         app.quit()
-      } else if (res.response === 1) {
-        mainWindow.hide()
       }
     } else {
       mainWindow.destroy()

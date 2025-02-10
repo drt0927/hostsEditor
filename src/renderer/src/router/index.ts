@@ -32,7 +32,7 @@ const routes: Array<RouteRecordRaw> = [
         // ParkingSearch
         path: '/parking-search',
         name: 'ParkingSearch',
-        component: () => import('@/views/HostsEditor/Index.vue'),
+        component: () => import('@/views/ParkingSearch/Index.vue'),
         meta: {
           depth: 1,
           title: '🅿️주차장🅿️ 검색'
